@@ -1022,13 +1022,6 @@ const sampleText = `यहाँ अपना हैडलाइन लिखे
       applyPhotoTransform();
     }, { passive: false });
 
-    document.querySelector("#sampleBtn").addEventListener("click", () => {
-      pushHistory();
-      removedColumnStack = [];
-      manualSubheadline = "";
-      source.value = sampleText;
-      render();
-    });
     document.querySelector("#downloadBtn").addEventListener("click", downloadPng);
     [source, sourceNote, hasSubtitle, titleSize, bodySize, headerSize, borderSize, sheetWidth, logoMode, languageMode, headerColorMode]
       .forEach(control => control.addEventListener("input", render));
