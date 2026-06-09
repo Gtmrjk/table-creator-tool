@@ -487,8 +487,19 @@ const sampleText = `यहाँ अपना हैडलाइन लिखे
 
     function applyPhotoTransform() {
       photoFrame.classList.toggle("editing", photoEditMode && Boolean(uploadedPhotoSrc));
+      const frameWidth = photoFrame.clientWidth || 0;
+      const frameHeight = photoFrame.clientHeight || 0;
+      const imageWidth = photoPreview.naturalWidth || 0;
+      const imageHeight = photoPreview.naturalHeight || 0;
+
+      if (frameWidth && frameHeight && imageWidth && imageHeight) {
+        const baseScale = Math.max(frameWidth / imageWidth, frameHeight / imageHeight);
+        photoPreview.style.width = `${imageWidth * baseScale}px`;
+        photoPreview.style.height = `${imageHeight * baseScale}px`;
+      }
+
       photoPreview.style.transform =
-        `translate(${photoCrop.x}px, ${photoCrop.y}px) scale(${photoCrop.scale})`;
+        `translate(-50%, -50%) translate(${photoCrop.x}px, ${photoCrop.y}px) scale(${photoCrop.scale})`;
     }
 
     function setCanvasFont(ctx, weight, size) {
@@ -977,6 +988,8 @@ const sampleText = `यहाँ अपना हैडलाइन लिखे
       resetPhotoCrop();
       render();
     });
+
+    photoPreview.addEventListener("load", applyPhotoTransform);
 
     photoFrame.addEventListener("dblclick", event => {
       if (!uploadedPhotoSrc) return;
