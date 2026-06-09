@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="hi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hindi Table Creator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anek+Devanagari:wght@400;500;600;700;800&family=Anek+Gujarati:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <section class="controls" aria-label="Table controls">
+      <div class="brand-row">
+        <div>
+          <h1>Table Creator</h1>
+          <p class="hint">Paste content. Use double spaces or tabs to split columns.</p>
+        </div>
+      </div>
+
+      <label class="language-field">
+        Language / Brand
+        <select id="languageMode">
+          <option value="bhaskarHindi">Bhaskar - Hindi</option>
+          <option value="divyaMarathi">Divya Marathi - Marathi</option>
+          <option value="bhaskarEnglish">Bhaskar English - English</option>
+          <option value="divyaBhaskar">Divya Bhaskar - Gujarati</option>
+        </select>
+      </label>
+
+      <label class="language-field">
+        Header Color
+        <select id="headerColorMode">
+          <option value="gray">Current Gray</option>
+          <option value="orange">Orange</option>
+        </select>
+      </label>
+
+      <div class="input-card">
+        <div class="section-label">
+          <span>Content</span>
+          <div class="column-tools" aria-label="Column controls">
+            <button class="chip-btn" id="addColumnBtn" type="button" title="Add column" aria-label="Add column">+</button>
+            <button class="chip-btn secondary" id="removeColumnBtn" type="button" title="Remove column" aria-label="Remove column">-</button>
+          </div>
+        </div>
+        <textarea id="source" spellcheck="false"></textarea>
+        <button class="floating-subhead-btn" id="makeSubheadBtn" type="button" hidden>Subhead</button>
+      </div>
+
+      <div class="error" id="error"></div>
+
+      <div class="photo-tools">
+        <label class="file-btn">
+          Upload Photo
+          <input id="photoInput" type="file" accept="image/*">
+        </label>
+        <button class="small-btn" id="clearPhotoBtn" type="button">Remove</button>
+      </div>
+
+      <div class="input-card">
+        <div class="section-label">
+          <span>Source</span>
+        </div>
+        <textarea class="source-textarea" id="sourceNote" spellcheck="false" placeholder="Source:"></textarea>
+      </div>
+
+      <label class="check hidden-options">
+        <input id="hasSubtitle" type="checkbox" checked>
+        Use tab as subheadline separator
+      </label>
+
+      <div class="grid-controls hidden-options">
+        <label>
+          Headline size
+          <input id="titleSize" type="number" min="24" max="58" value="41">
+        </label>
+        <label>
+          Table text
+          <input id="bodySize" type="number" min="16" max="38" value="24">
+        </label>
+        <label>
+          Header text
+          <input id="headerSize" type="number" min="18" max="44" value="22">
+        </label>
+        <label>
+          Line width
+          <input id="borderSize" type="number" min="1" max="8" value="1">
+        </label>
+        <label>
+          आउटपुट चौड़ाई
+          <input id="sheetWidth" type="number" value="730" disabled>
+        </label>
+        <label>
+          Logo
+          <select id="logoMode">
+            <option value="show">Show</option>
+            <option value="hide">Hide</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="actions">
+        <button class="btn secondary" id="sampleBtn" type="button">Sample</button>
+        <button class="btn" id="downloadBtn" type="button">Download PNG</button>
+      </div>
+    </section>
+
+    <section class="stage" aria-label="Preview">
+      <div class="sheet-wrap">
+        <article class="sheet" id="sheet">
+          <img class="news-logo" id="logo" alt="" aria-hidden="true">
+          <div class="photo-frame" id="photoFrame" hidden>
+            <img id="photoPreview" alt="">
+          </div>
+          <div class="table-titlebar">
+            <div class="heading-box">
+              <h2 class="headline" id="headline"></h2>
+              <p class="subheadline" id="subheadline"></p>
+            </div>
+          </div>
+          <table class="data-table" id="table"></table>
+          <p class="table-source" id="tableSource" hidden></p>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
