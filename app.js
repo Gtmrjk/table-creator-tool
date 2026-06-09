@@ -712,7 +712,7 @@ const sampleText = `यहाँ अपना हैडलाइन लिखे
       ctx.restore();
     }
 
-    async function downloadPng() {
+    async function downloadJpg() {
       try {
         await document.fonts.ready;
         const data = parseInput(source.value);
@@ -887,11 +887,11 @@ const sampleText = `यहाँ अपना हैडलाइन लिखे
         }
 
         const link = document.createElement("a");
-        link.download = "hindi-table.png";
-        link.href = canvas.toDataURL("image/png");
+        link.download = "hindi-table.jpg";
+        link.href = canvas.toDataURL("image/jpeg", 0.95);
         link.click();
       } catch (err) {
-        error.textContent = err.message || "PNG download failed.";
+        error.textContent = err.message || "JPG download failed.";
         error.classList.add("show");
       }
     }
@@ -1022,7 +1022,7 @@ const sampleText = `यहाँ अपना हैडलाइन लिखे
       applyPhotoTransform();
     }, { passive: false });
 
-    document.querySelector("#downloadBtn").addEventListener("click", downloadPng);
+    document.querySelector("#downloadBtn").addEventListener("click", downloadJpg);
     [source, sourceNote, hasSubtitle, titleSize, bodySize, headerSize, borderSize, sheetWidth, logoMode, languageMode, headerColorMode]
       .forEach(control => control.addEventListener("input", render));
     languageMode.addEventListener("change", render);
