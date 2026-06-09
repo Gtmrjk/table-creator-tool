@@ -165,6 +165,7 @@
       font-weight: 800;
       line-height: 1;
       text-align: center;
+      text-transform: uppercase;
       box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
     }
 
@@ -270,16 +271,17 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      border: 1px solid var(--ink);
+      border: 1px solid var(--accent);
       border-radius: 12px;
       padding: 0 16px;
-      background: var(--ink);
+      background: var(--accent);
       color: #fff;
       cursor: pointer;
       font-weight: 800;
       line-height: 1;
       text-align: center;
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.14);
+      text-transform: uppercase;
+      box-shadow: 0 10px 18px rgba(245, 159, 36, 0.28);
       transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
     }
 
@@ -287,6 +289,12 @@
       background: #fff;
       color: var(--ink);
       box-shadow: none;
+    }
+
+    .btn:hover {
+      background: var(--accent-dark);
+      border-color: var(--accent-dark);
+      box-shadow: 0 12px 22px rgba(207, 113, 20, 0.28);
     }
 
     .btn:hover,
@@ -340,6 +348,7 @@
       font-weight: 800;
       line-height: 1;
       text-align: center;
+      text-transform: uppercase;
       transition: transform 0.15s ease;
     }
 
@@ -361,6 +370,7 @@
       font-weight: 800;
       line-height: 1;
       text-align: center;
+      text-transform: uppercase;
       transition: transform 0.15s ease;
     }
 
