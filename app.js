@@ -31,6 +31,9 @@ const sampleText = `यहाँ अपना हैडलाइन लिखे
     const sourceNote = document.querySelector("#sourceNote");
     const addColumnBtn = document.querySelector("#addColumnBtn");
     const removeColumnBtn = document.querySelector("#removeColumnBtn");
+    const twoColumnWidthControl = document.querySelector("#twoColumnWidthControl");
+    const twoColumnSplit = document.querySelector("#twoColumnSplit");
+    const twoColumnWidthValue = document.querySelector("#twoColumnWidthValue");
     const makeSubheadBtn = document.querySelector("#makeSubheadBtn");
     const makeBoldBtn = document.querySelector("#makeBoldBtn");
     const photoInput = document.querySelector("#photoInput");
@@ -446,6 +449,23 @@ const sampleText = `यहाँ अपना हैडलाइन लिखे
       return Array.from({ length }, (_, index) => row[index] || "");
     }
 
+    function getColumnFractions(columnCount) {
+      if (columnCount === 2) {
+        const first = Number(twoColumnSplit.value) / 100;
+        return [first, 1 - first];
+      }
+      return Array.from({ length: columnCount }, () => 1 / columnCount);
+    }
+
+    function updateTwoColumnControl(columnCount) {
+      const isTwoColumn = columnCount === 2;
+      twoColumnWidthControl.hidden = !isTwoColumn;
+      if (!isTwoColumn) return;
+
+      const first = Number(twoColumnSplit.value);
+      twoColumnWidthValue.textContent = `${first} / ${100 - first}`;
+    }
+
     function parseRichSegments(text) {
       const segments = [];
       let remaining = String(text || "");
@@ -483,14 +503,22 @@ const sampleText = `यहाँ अपना हैडलाइन लिखे
       try {
         const data = parseInput(source.value);
         const colCount = data.header.length;
+        const columnFractions = getColumnFractions(colCount);
         currentTitle = data.title;
         subheadline.textContent = data.subtitle;
         subheadline.hidden = !data.subtitle;
         sheet.style.setProperty("--subtitle-shift", uploadedPhotoSrc ? "0px" : "25px");
+        updateTwoColumnControl(colCount);
         error.classList.remove("show");
         error.textContent = "";
 
         table.innerHTML = "";
+        const colgroup = document.createElement("colgroup");
+        columnFractions.forEach(fraction => {
+          const col = document.createElement("col");
+          col.style.width = `${fraction * 100}%`;
+          colgroup.append(col);
+        });
         const thead = document.createElement("thead");
         const headRow = document.createElement("tr");
         data.header.forEach(cell => {
@@ -511,10 +539,11 @@ const sampleText = `यहाँ अपना हैडलाइन लिखे
           tbody.append(tr);
         });
 
-        table.append(thead, tbody);
+        table.append(colgroup, thead, tbody);
       } catch (err) {
         error.textContent = err.message;
         error.classList.add("show");
+        twoColumnWidthControl.hidden = true;
       }
 
       sheet.style.setProperty("--title-size", `${titleSize.value}px`);
@@ -862,7 +891,12 @@ const sampleText = `यहाँ अपना हैडलाइन लिखे
         const shouldWrapAroundLogo = logoShown && !photoImage;
         const tableWidth = outputWidth - paddingX * 2;
         const columns = data.header.length;
-        const columnWidth = tableWidth / columns;
+        const columnFractions = getColumnFractions(columns);
+        const columnWidths = columnFractions.map(fraction => tableWidth * fraction);
+        const columnXs = columnWidths.reduce((positions, width, index) => {
+          positions.push(index === 0 ? paddingX : positions[index - 1] + columnWidths[index - 1]);
+          return positions;
+        }, []);
         const headerColors = getHeaderColors();
         const scratch = document.createElement("canvas").getContext("2d");
 
@@ -905,12 +939,12 @@ const sampleText = `यहाँ अपना हैडलाइन लिखे
         const bodyLineHeight = 32;
 
         setCanvasFont(scratch, 600, headerPx);
-        const headerLines = data.header.map(text => wrapRichCanvasText(scratch, text, columnWidth - cellPadX * 2, headerPx, 600, 700));
+        const headerLines = data.header.map((text, index) => wrapRichCanvasText(scratch, text, columnWidths[index] - cellPadX * 2, headerPx, 600, 700));
         const headerHeight = Math.max(...headerLines.map(lines => lines.length * headerLineHeight + cellPadTop + cellPadBottom));
 
         setCanvasFont(scratch, 500, bodyPx);
         const normalizedRows = data.rows.map(row => normalizeRow(row, columns));
-        const bodyLines = normalizedRows.map(row => row.map(text => wrapRichCanvasText(scratch, text, columnWidth - cellPadX * 2, bodyPx, 500, 700)));
+        const bodyLines = normalizedRows.map(row => row.map((text, index) => wrapRichCanvasText(scratch, text, columnWidths[index] - cellPadX * 2, bodyPx, 500, 700)));
         const rowHeights = bodyLines.map(row => Math.max(60, ...row.map(lines => lines.length * bodyLineHeight + cellPadTop + cellPadBottom)));
         const sourceText = sourceNote.value.trim();
         const sourceFontSize = 20;
@@ -970,7 +1004,7 @@ const sampleText = `यहाँ अपना हैडलाइन लिखे
         setCanvasFont(ctx, 600, headerPx);
         ctx.fillStyle = headerColors.text;
         headerLines.forEach((lines, index) => {
-          const x = paddingX + index * columnWidth;
+          const x = columnXs[index];
           const textY = y + (headerHeight - lines.length * headerLineHeight) / 2;
           drawRichWrappedText(ctx, lines, x + cellPadX, textY, headerLineHeight, headerPx, 600, 700);
         });
@@ -979,7 +1013,7 @@ const sampleText = `यहाँ अपना हैडलाइन लिखे
         ctx.rect(paddingX, y, tableWidth, headerHeight);
         ctx.stroke();
         for (let index = 1; index < columns; index++) {
-          const x = paddingX + index * columnWidth;
+          const x = columnXs[index];
           ctx.beginPath();
           ctx.moveTo(x, y);
           ctx.lineTo(x, y + headerHeight);
@@ -991,7 +1025,7 @@ const sampleText = `यहाँ अपना हैडलाइन लिखे
         bodyLines.forEach((row, rowIndex) => {
           const rowHeight = rowHeights[rowIndex];
           row.forEach((lines, colIndex) => {
-            const x = paddingX + colIndex * columnWidth;
+            const x = columnXs[colIndex];
             const textY = y + (rowHeight - lines.length * bodyLineHeight) / 2;
             drawRichWrappedText(ctx, lines, x + cellPadX, textY, bodyLineHeight, bodyPx, 500, 700);
           });
@@ -1000,7 +1034,7 @@ const sampleText = `यहाँ अपना हैडलाइन लिखे
           ctx.rect(paddingX, y, tableWidth, rowHeight);
           ctx.stroke();
           for (let index = 1; index < columns; index++) {
-            const x = paddingX + index * columnWidth;
+            const x = columnXs[index];
             ctx.beginPath();
             ctx.moveTo(x, y);
             ctx.lineTo(x, y + rowHeight);
@@ -1163,7 +1197,7 @@ const sampleText = `यहाँ अपना हैडलाइन लिखे
     }, { passive: false });
 
     document.querySelector("#downloadBtn").addEventListener("click", downloadJpg);
-    [source, sourceNote, hasSubtitle, titleSize, bodySize, headerSize, borderSize, sheetWidth, logoMode, languageMode, headerColorMode]
+    [source, sourceNote, hasSubtitle, titleSize, bodySize, headerSize, borderSize, sheetWidth, logoMode, languageMode, headerColorMode, twoColumnSplit]
       .forEach(control => control.addEventListener("input", render));
     languageMode.addEventListener("change", render);
     logoMode.addEventListener("change", render);

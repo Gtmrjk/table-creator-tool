@@ -180,6 +180,38 @@
       color: #fff;
     }
 
+    .two-col-width {
+      display: grid;
+      gap: 8px;
+      padding: 10px 12px;
+      border: 1px solid #eadfce;
+      border-radius: 12px;
+      background: #fffaf3;
+    }
+
+    .two-col-width[hidden] {
+      display: none;
+    }
+
+    .two-col-width-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: #24201b;
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .two-col-width input {
+      min-height: 22px;
+      padding: 0;
+      border: 0;
+      accent-color: var(--accent);
+      background: transparent;
+      box-shadow: none;
+    }
+
     textarea {
       width: 100%;
       min-height: 360px;
