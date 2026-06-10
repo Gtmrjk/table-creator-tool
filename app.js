@@ -956,6 +956,7 @@ const sampleText = `यहाँ अपना हैडलाइन लिखे
         const cellPadBottom = 11;
         const headerLineHeight = 32;
         const bodyLineHeight = 32;
+        const canvasTableTextOffsetY = 4;
 
         setCanvasFont(scratch, 600, headerPx);
         const headerLines = data.header.map((text, index) => wrapRichCanvasText(scratch, text, columnWidths[index] - cellPadX * 2, headerPx, 600, 700));
@@ -1024,7 +1025,7 @@ const sampleText = `यहाँ अपना हैडलाइन लिखे
         ctx.fillStyle = headerColors.text;
         headerLines.forEach((lines, index) => {
           const x = columnXs[index];
-          const textY = y + (headerHeight - lines.length * headerLineHeight) / 2;
+          const textY = y + (headerHeight - lines.length * headerLineHeight) / 2 + canvasTableTextOffsetY;
           drawRichWrappedText(ctx, lines, x + cellPadX, textY, headerLineHeight, headerPx, 600, 700);
         });
 
@@ -1045,7 +1046,7 @@ const sampleText = `यहाँ अपना हैडलाइन लिखे
           const rowHeight = rowHeights[rowIndex];
           row.forEach((lines, colIndex) => {
             const x = columnXs[colIndex];
-            const textY = y + (rowHeight - lines.length * bodyLineHeight) / 2;
+            const textY = y + (rowHeight - lines.length * bodyLineHeight) / 2 + canvasTableTextOffsetY;
             drawRichWrappedText(ctx, lines, x + cellPadX, textY, bodyLineHeight, bodyPx, 500, 700);
           });
 
