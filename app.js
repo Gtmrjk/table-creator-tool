@@ -777,9 +777,28 @@ const sampleText = `यहाँ अपना हैडलाइन लिखे
 
     function drawRichWrappedText(ctx, lines, x, y, lineHeight, size, normalWeight = 500, boldWeight = 700) {
       lines.forEach((line, lineIndex) => {
+        const drawableLine = line.map(token => ({ ...token }));
+        if (drawableLine.length) {
+          drawableLine[drawableLine.length - 1].text =
+            drawableLine[drawableLine.length - 1].text.replace(/\s+$/, "");
+        }
+
+        const fillStyle = ctx.fillStyle;
+        const hasMixedWeight = drawableLine.some(token => token.bold) &&
+          drawableLine.some(token => !token.bold);
+        if (!hasMixedWeight) {
+          const isBold = drawableLine.some(token => token.bold);
+          setRichCanvasFont(ctx, isBold, size, normalWeight, boldWeight);
+          ctx.fillStyle = fillStyle;
+          ctx.textAlign = "left";
+          ctx.fillText(drawableLine.map(token => token.text).join(""), x, y + lineIndex * lineHeight);
+          return;
+        }
+
         let cursorX = x;
-        line.forEach(token => {
+        drawableLine.forEach(token => {
           setRichCanvasFont(ctx, token.bold, size, normalWeight, boldWeight);
+          ctx.fillStyle = fillStyle;
           ctx.textAlign = "left";
           ctx.fillText(token.text, cursorX, y + lineIndex * lineHeight);
           cursorX += ctx.measureText(token.text).width;
