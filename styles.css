@@ -592,7 +592,7 @@
 
     .data-table td {
       min-height: 60px;
-      font-size: var(--body-size, 24px);
+      font-size: var(--body-size, 26px);
       line-height: 32px;
       font-weight: 500;
       text-align: var(--body-align, left);
