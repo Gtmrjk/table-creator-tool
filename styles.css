@@ -173,6 +173,13 @@
       display: none;
     }
 
+    .floating-bold-btn {
+      right: 92px;
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
     textarea {
       width: 100%;
       min-height: 360px;

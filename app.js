@@ -32,6 +32,7 @@ const sampleText = `यहाँ अपना हैडलाइन लिखे
     const addColumnBtn = document.querySelector("#addColumnBtn");
     const removeColumnBtn = document.querySelector("#removeColumnBtn");
     const makeSubheadBtn = document.querySelector("#makeSubheadBtn");
+    const makeBoldBtn = document.querySelector("#makeBoldBtn");
     const photoInput = document.querySelector("#photoInput");
     const clearPhotoBtn = document.querySelector("#clearPhotoBtn");
     const headline = document.querySelector("#headline");
@@ -173,7 +174,7 @@ const sampleText = `यहाँ अपना हैडलाइन लिखे
       const selectionEnd = Math.min(state.selectionEnd ?? selectionStart, source.value.length);
       source.setSelectionRange(selectionStart, selectionEnd);
       render();
-      updateSubheadButton();
+      updateFloatingButtons();
       isRestoringHistory = false;
     }
 
@@ -205,22 +206,35 @@ const sampleText = `यहाँ अपना हैडलाइन लिखे
       return line.replace(/^[ ]+|[ ]+$/g, "");
     }
 
-    function updateSubheadButton() {
-      const hasSelection = source.selectionStart !== source.selectionEnd &&
-        source.value.slice(source.selectionStart, source.selectionEnd).trim();
-      if (!hasSelection) {
-        makeSubheadBtn.hidden = true;
-        return;
-      }
-
+    function getTableSelectionInfo() {
       try {
         const { tableLines } = splitContentParts(source.value);
         const tableText = tableLines.join("\n");
         const tableStart = source.value.indexOf(tableText);
-        makeSubheadBtn.hidden = tableStart >= 0 && source.selectionStart >= tableStart;
+        const selectedText = source.value.slice(source.selectionStart, source.selectionEnd);
+        return {
+          tableStart,
+          selectedText,
+          isInTable: tableStart >= 0 && source.selectionStart >= tableStart,
+          isSingleCellText: Boolean(selectedText.trim()) && !/[\n\t]/.test(selectedText)
+        };
       } catch (err) {
-        makeSubheadBtn.hidden = false;
+        return { tableStart: -1, selectedText: "", isInTable: false, isSingleCellText: false };
       }
+    }
+
+    function updateFloatingButtons() {
+      const hasSelection = source.selectionStart !== source.selectionEnd &&
+        source.value.slice(source.selectionStart, source.selectionEnd).trim();
+      if (!hasSelection) {
+        makeSubheadBtn.hidden = true;
+        makeBoldBtn.hidden = true;
+        return;
+      }
+
+      const tableSelection = getTableSelectionInfo();
+      makeSubheadBtn.hidden = tableSelection.isInTable;
+      makeBoldBtn.hidden = !(tableSelection.isInTable && tableSelection.isSingleCellText);
     }
 
     function makeSelectedTextSubhead() {
@@ -265,7 +279,25 @@ const sampleText = `यहाँ अपना हैडलाइन लिखे
       ].join("\n");
       source.setSelectionRange(0, 0);
       makeSubheadBtn.hidden = true;
+      makeBoldBtn.hidden = true;
       removedColumnStack = [];
+      render();
+    }
+
+    function makeSelectedTextBold() {
+      const value = source.value;
+      const start = source.selectionStart ?? 0;
+      const end = source.selectionEnd ?? 0;
+      if (start === end) return;
+
+      const tableSelection = getTableSelectionInfo();
+      if (!tableSelection.isInTable || !tableSelection.isSingleCellText) return;
+
+      const selectedText = value.slice(start, end);
+      pushHistory();
+      source.value = `${value.slice(0, start)}**${selectedText}**${value.slice(end)}`;
+      source.setSelectionRange(start + 2, end + 2);
+      makeBoldBtn.hidden = true;
       render();
     }
 
@@ -414,6 +446,38 @@ const sampleText = `यहाँ अपना हैडलाइन लिखे
       return Array.from({ length }, (_, index) => row[index] || "");
     }
 
+    function parseRichSegments(text) {
+      const segments = [];
+      let remaining = String(text || "");
+      let bold = false;
+
+      while (remaining.length) {
+        const markerIndex = remaining.indexOf("**");
+        if (markerIndex < 0) {
+          if (remaining) segments.push({ text: remaining, bold });
+          break;
+        }
+
+        if (markerIndex > 0) {
+          segments.push({ text: remaining.slice(0, markerIndex), bold });
+        }
+
+        bold = !bold;
+        remaining = remaining.slice(markerIndex + 2);
+      }
+
+      return segments.filter(segment => segment.text);
+    }
+
+    function renderRichInline(element, text) {
+      element.textContent = "";
+      parseRichSegments(text).forEach(segment => {
+        const span = document.createElement(segment.bold ? "strong" : "span");
+        span.textContent = segment.text;
+        element.append(span);
+      });
+    }
+
     function render() {
       let currentTitle = "";
       try {
@@ -431,7 +495,7 @@ const sampleText = `यहाँ अपना हैडलाइन लिखे
         const headRow = document.createElement("tr");
         data.header.forEach(cell => {
           const th = document.createElement("th");
-          th.textContent = cell;
+          renderRichInline(th, cell);
           headRow.append(th);
         });
         thead.append(headRow);
@@ -441,7 +505,7 @@ const sampleText = `यहाँ अपना हैडलाइन लिखे
           const tr = document.createElement("tr");
           normalizeRow(row, colCount).forEach(cell => {
             const td = document.createElement("td");
-            td.textContent = cell;
+            renderRichInline(td, cell);
             tr.append(td);
           });
           tbody.append(tr);
@@ -640,6 +704,60 @@ const sampleText = `यहाँ अपना हैडलाइन लिखे
       });
     }
 
+    function tokenizeRichText(text) {
+      const tokens = [];
+      parseRichSegments(text).forEach(segment => {
+        const parts = segment.text.match(/\S+\s*/g) || [];
+        parts.forEach(part => tokens.push({ text: part, bold: segment.bold }));
+      });
+      return tokens;
+    }
+
+    function setRichCanvasFont(ctx, bold, size, normalWeight = 500, boldWeight = 700) {
+      setCanvasFont(ctx, bold ? boldWeight : normalWeight, size);
+    }
+
+    function measureRichTokens(ctx, tokens, size, normalWeight = 500, boldWeight = 700) {
+      return tokens.reduce((width, token) => {
+        setRichCanvasFont(ctx, token.bold, size, normalWeight, boldWeight);
+        return width + ctx.measureText(token.text).width;
+      }, 0);
+    }
+
+    function wrapRichCanvasText(ctx, text, maxWidth, size, normalWeight = 500, boldWeight = 700) {
+      const tokens = tokenizeRichText(text);
+      if (!tokens.length) return [[{ text: "", bold: false }]];
+
+      const lines = [];
+      let current = [];
+
+      tokens.forEach(token => {
+        const test = [...current, token];
+        if (measureRichTokens(ctx, test, size, normalWeight, boldWeight) <= maxWidth || !current.length) {
+          current = test;
+          return;
+        }
+
+        lines.push(current);
+        current = [token];
+      });
+
+      if (current.length) lines.push(current);
+      return lines;
+    }
+
+    function drawRichWrappedText(ctx, lines, x, y, lineHeight, size, normalWeight = 500, boldWeight = 700) {
+      lines.forEach((line, lineIndex) => {
+        let cursorX = x;
+        line.forEach(token => {
+          setRichCanvasFont(ctx, token.bold, size, normalWeight, boldWeight);
+          ctx.textAlign = "left";
+          ctx.fillText(token.text, cursorX, y + lineIndex * lineHeight);
+          cursorX += ctx.measureText(token.text).width;
+        });
+      });
+    }
+
     function drawCenteredParagraphLine(ctx, line, x, y, fullX, fullWidth) {
       const textWidth = ctx.measureText(line.text).width;
       const centeredX = fullX + (fullWidth - textWidth) / 2;
@@ -787,12 +905,12 @@ const sampleText = `यहाँ अपना हैडलाइन लिखे
         const bodyLineHeight = 32;
 
         setCanvasFont(scratch, 600, headerPx);
-        const headerLines = data.header.map(text => wrapCanvasText(scratch, text, columnWidth - cellPadX * 2));
+        const headerLines = data.header.map(text => wrapRichCanvasText(scratch, text, columnWidth - cellPadX * 2, headerPx, 600, 700));
         const headerHeight = Math.max(...headerLines.map(lines => lines.length * headerLineHeight + cellPadTop + cellPadBottom));
 
         setCanvasFont(scratch, 500, bodyPx);
         const normalizedRows = data.rows.map(row => normalizeRow(row, columns));
-        const bodyLines = normalizedRows.map(row => row.map(text => wrapCanvasText(scratch, text, columnWidth - cellPadX * 2)));
+        const bodyLines = normalizedRows.map(row => row.map(text => wrapRichCanvasText(scratch, text, columnWidth - cellPadX * 2, bodyPx, 500, 700)));
         const rowHeights = bodyLines.map(row => Math.max(60, ...row.map(lines => lines.length * bodyLineHeight + cellPadTop + cellPadBottom)));
         const sourceText = sourceNote.value.trim();
         const sourceFontSize = 20;
@@ -854,7 +972,7 @@ const sampleText = `यहाँ अपना हैडलाइन लिखे
         headerLines.forEach((lines, index) => {
           const x = paddingX + index * columnWidth;
           const textY = y + (headerHeight - lines.length * headerLineHeight) / 2;
-          drawWrappedText(ctx, lines, x + cellPadX, textY, columnWidth - cellPadX * 2, headerLineHeight, "left");
+          drawRichWrappedText(ctx, lines, x + cellPadX, textY, headerLineHeight, headerPx, 600, 700);
         });
 
         ctx.beginPath();
@@ -875,7 +993,7 @@ const sampleText = `यहाँ अपना हैडलाइन लिखे
           row.forEach((lines, colIndex) => {
             const x = paddingX + colIndex * columnWidth;
             const textY = y + (rowHeight - lines.length * bodyLineHeight) / 2;
-            drawWrappedText(ctx, lines, x + cellPadX, textY, columnWidth - cellPadX * 2, bodyLineHeight, "left");
+            drawRichWrappedText(ctx, lines, x + cellPadX, textY, bodyLineHeight, bodyPx, 500, 700);
           });
 
           ctx.beginPath();
@@ -946,6 +1064,7 @@ const sampleText = `यहाँ अपना हैडलाइन लिखे
     addColumnBtn.addEventListener("click", addColumnToContent);
     removeColumnBtn.addEventListener("click", removeColumnFromContent);
     makeSubheadBtn.addEventListener("mousedown", event => event.preventDefault());
+    makeBoldBtn.addEventListener("mousedown", event => event.preventDefault());
     makeSubheadBtn.addEventListener("click", () => {
       try {
         makeSelectedTextSubhead();
@@ -954,11 +1073,19 @@ const sampleText = `यहाँ अपना हैडलाइन लिखे
         error.classList.add("show");
       }
     });
-    source.addEventListener("select", updateSubheadButton);
-    source.addEventListener("mouseup", updateSubheadButton);
-    source.addEventListener("keyup", updateSubheadButton);
+    makeBoldBtn.addEventListener("click", () => {
+      try {
+        makeSelectedTextBold();
+      } catch (err) {
+        error.textContent = err.message;
+        error.classList.add("show");
+      }
+    });
+    source.addEventListener("select", updateFloatingButtons);
+    source.addEventListener("mouseup", updateFloatingButtons);
+    source.addEventListener("keyup", updateFloatingButtons);
     source.addEventListener("blur", () => {
-      window.setTimeout(updateSubheadButton, 120);
+      window.setTimeout(updateFloatingButtons, 120);
     });
     source.addEventListener("input", () => {
       if (isRestoringHistory) return;
@@ -966,7 +1093,7 @@ const sampleText = `यहाँ अपना हैडलाइन लिखे
       pendingInputState = null;
       removedColumnStack = [];
       manualSubheadline = "";
-      updateSubheadButton();
+      updateFloatingButtons();
     });
 
     photoInput.addEventListener("change", () => {
