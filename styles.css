@@ -458,7 +458,7 @@
       overflow-wrap: anywhere;
       position: relative;
       left: var(--subtitle-shift, 25px);
-      width: calc(100% - var(--subtitle-shift, 25px));
+      width: 100%;
     }
 
     .photo-frame {

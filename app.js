@@ -773,7 +773,7 @@ const sampleText = `यहाँ अपना हैडलाइन लिखे
 
         if (data.subtitle) {
           setCanvasFont(scratch, 600, subtitlePx);
-          subtitleLines = wrapCanvasText(scratch, data.subtitle, tableWidth - headlineShiftX);
+          subtitleLines = wrapCanvasText(scratch, data.subtitle, tableWidth);
           subtitleLineHeight = Math.round(subtitlePx * 1.25);
           titleBlockHeight += (titleBlockHeight ? 8 : titleTopSpace) + subtitleLines.length * subtitleLineHeight;
         }
@@ -840,7 +840,7 @@ const sampleText = `यहाँ अपना हैडलाइन लिखे
           const subtitleY = titleLines.length
             ? titleStartY + titleLines.length * titleLineHeight + 8
             : titleAreaY + titleTopSpace;
-          drawWrappedText(ctx, subtitleLines, paddingX + headlineShiftX, subtitleY, tableWidth - headlineShiftX, subtitleLineHeight, "center");
+          drawWrappedText(ctx, subtitleLines, paddingX + headlineShiftX, subtitleY, tableWidth, subtitleLineHeight, "center");
         }
 
         let y = tableY;
