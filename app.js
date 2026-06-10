@@ -956,7 +956,7 @@ const sampleText = `यहाँ अपना हैडलाइन लिखे
         const cellPadBottom = 11;
         const headerLineHeight = 32;
         const bodyLineHeight = 32;
-        const canvasTableTextOffsetY = 4;
+        const canvasTableTextOffsetY = 7;
 
         setCanvasFont(scratch, 600, headerPx);
         const headerLines = data.header.map((text, index) => wrapRichCanvasText(scratch, text, columnWidths[index] - cellPadX * 2, headerPx, 600, 700));
