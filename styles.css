@@ -583,7 +583,7 @@
 
     .data-table th {
       background: var(--head);
-      font-size: var(--header-size, 22px);
+      font-size: var(--header-size, 26px);
       line-height: 32px;
       font-weight: 600;
       text-align: left;
