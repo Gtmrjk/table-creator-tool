@@ -45,6 +45,9 @@
     .controls {
       display: flex;
       min-height: calc(100vh - 32px);
+      max-height: calc(100vh - 36px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
       flex-direction: column;
       gap: 14px;
       padding: 18px;
@@ -633,6 +636,8 @@
 
       .controls {
         min-height: auto;
+        max-height: none;
+        overflow: visible;
       }
 
       .sheet-wrap {
